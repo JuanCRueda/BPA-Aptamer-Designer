@@ -3,15 +3,18 @@ from subprocess import Popen, PIPE
 from random import randint, choice
 import numpy as np
 
-def BPA_Aptamer_design(n_pool,n_gen,n_candidates,desired_length=False):
+def BPA_Aptamer_design(n_pool,n_gen,n_candidates,desired_length=False,starting_sequence=False):
     print('Starting program')
     print('-------------------------------')
     aptamer1_seq='CGGTGGGTGGTCAGGTGGGATA'.lower()
     aptamer1_str,_=Structure_Aptamer('CGGTGGGTGGTCAGGTGGGATAGCGTTCCGCGTATGGCCCAGCG')
     aptamer2_seq='GGATA'.lower()
     aptamer2_str,_=Structure_Aptamer('GGATAGCGGGTTCC')
-    HRP_DNAzyme='GTGGGGCATTGTGGGTGGGTGTGG'
-    pool=initial_pool_gen(n_pool,desired_length)
+    HRP_DNAzyme='GTGGGGCATTGTGGGTGGGTGTGG'.lower()
+    if starting_sequence==False:
+        pool=initial_pool_gen(n_pool,desired_length)
+    else:
+        pool=initial_pool_with_seq(n_pool,starting_sequence,desired_length)
     for generation in range(n_gen):
         print('Current generation: '+str(generation+1))
         candidates=pool_evaluation(pool,n_candidates,aptamer1_seq,aptamer1_str,aptamer2_seq,aptamer2_str,HRP_DNAzyme)
@@ -75,6 +78,13 @@ def initial_pool_gen(n_pool,desired_length):
             for m in range(length):
                 seq=seq+choice('atgc')
         seqs.append(seq)
+    return pd.DataFrame(seqs,columns=['sequences'])
+
+def initial_pool_with_seq(n_pool,seq,desired_length):
+    seq=seq.lower()
+    seqs=[seq]
+    for n in range(n_pool-1):
+        seqs.append(mutation(seq))
     return pd.DataFrame(seqs,columns=['sequences'])
 
 def new_pool_gen(candidates,n_pool,n_candidates):
@@ -141,7 +151,7 @@ def pool_evaluation(pool,n_candidates,aptamer1_seq,aptamer1_str,aptamer2_seq,apt
     pool['score']=np.average([pool['edit_apt1_norm'],pool['edit_apt2_norm'],pool['edit_apt1_str_norm'],pool['edit_apt2_str_norm'],pool['dMFE_norm']])
     return pool.nlargest(n_candidates,['score'])
 
-BPA_Aptamer_design(100,1000,10)                    
+BPA_Aptamer_design(100,2000,10,starting_sequence="CCACACCCACCCACAATGCCCCAC")                    
         
     
                 
